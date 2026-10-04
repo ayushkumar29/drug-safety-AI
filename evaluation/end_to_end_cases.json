@@ -1,0 +1,183 @@
+[
+  {
+    "case_id": "case_A1",
+    "category": "A_normal_quantitative",
+    "question": "Does empagliflozin increase the risk of genital infection compared with placebo?",
+    "expected_behavior": "Retrieve EMP-005 primary trial evidence, extract valid 2x2 counts (301/4687 vs 42/2333), exclude overlapping pooled publications (EMP-001/EMP-003), compute deterministic Risk Ratio (~3.5673) and Odds Ratio (~3.7435), and generate grounded report.",
+    "evidence_expectation": {
+      "min_extracted": 1,
+      "target_study_id": "EMP-005",
+      "expected_outcome": "genital infection",
+      "expected_treatment_events": 301,
+      "expected_treatment_n": 4687,
+      "expected_control_events": 42,
+      "expected_control_n": 2333
+    },
+    "statistical_expectation": {
+      "should_run_statistics": true,
+      "expected_rr": 3.5673,
+      "expected_or": 3.7435,
+      "tolerance": 0.05
+    },
+    "difficulty": "standard",
+    "failure_mode": "none"
+  },
+  {
+    "case_id": "case_A2",
+    "category": "A_hazard_ratio",
+    "question": "Does empagliflozin reduce 3-point MACE cardiovascular death compared with placebo in EMPA-REG OUTCOME?",
+    "expected_behavior": "Retrieve cardiovascular outcome evidence from EMP-005; identify Hazard Ratio (HR 0.86) as non-2x2 metric; do NOT convert HR to 2x2 event counts; skip 2x2 statistics engine safely without lineage or statistics failure.",
+    "evidence_expectation": {
+      "expected_metric_type": "hazard_ratio",
+      "expected_independent_count": 0,
+      "target_study_id": "EMP-005",
+      "expected_outcome": "cardiovascular death"
+    },
+    "statistical_expectation": {
+      "should_run_statistics": false,
+      "expected_status": "expected_non_2x2_skip"
+    },
+    "difficulty": "moderate",
+    "failure_mode": "none"
+  },
+  {
+    "case_id": "case_B1",
+    "category": "B_missing_unsupported",
+    "question": "Does empagliflozin increase the risk of hepatotoxicity compared with placebo?",
+    "expected_behavior": "Scan corpus for hepatotoxicity evidence; since no quantitative 2x2 hepatotoxicity event count table exists, reject/extract no valid evidence, run no statistics, and report insufficient evidence without hallucination.",
+    "evidence_expectation": {
+      "min_extracted": 0,
+      "expected_independent_count": 0
+    },
+    "statistical_expectation": {
+      "should_run_statistics": false,
+      "expected_status": "skipped_no_independent_evidence"
+    },
+    "difficulty": "hard",
+    "failure_mode": "hallucination_or_false_positive"
+  },
+  {
+    "case_id": "case_B2",
+    "category": "B_missing_unsupported",
+    "question": "Does empagliflozin increase the risk of idiopathic pulmonary fibrosis compared with placebo?",
+    "expected_behavior": "Detect complete absence of outcome in corpus, produce zero validated evidence records, skip statistics engine, and safely report insufficient evidence.",
+    "evidence_expectation": {
+      "min_extracted": 0,
+      "expected_independent_count": 0
+    },
+    "statistical_expectation": {
+      "should_run_statistics": false,
+      "expected_status": "skipped_no_independent_evidence"
+    },
+    "difficulty": "easy",
+    "failure_mode": "false_positive_extraction"
+  },
+  {
+    "case_id": "case_C1",
+    "category": "C_multiarm_evidence",
+    "question": "What is the incidence of genital infection across empagliflozin 10 mg, 25 mg, and placebo arms?",
+    "expected_behavior": "Retrieve multi-arm Table 2 from EMP-005; extract pooled treatment arm (301/4687) or 10mg arm (153/2345) safely without fabricating sample sizes or collapsing arms unverified.",
+    "evidence_expectation": {
+      "min_extracted": 1,
+      "target_study_id": "EMP-005",
+      "expected_outcome": "genital infection"
+    },
+    "statistical_expectation": {
+      "should_run_statistics": true,
+      "tolerance": 0.1
+    },
+    "difficulty": "hard",
+    "failure_mode": "fabricated_denominator_or_collapsed_arms"
+  },
+  {
+    "case_id": "case_D1",
+    "category": "D_overlapping_studies",
+    "question": "Does empagliflozin increase the risk of genital infection compared with placebo in pooled safety analyses?",
+    "expected_behavior": "Retrieve both pooled analyses (EMP-001/EMP-003) and primary RCT (EMP-005); study lineage resolves EMP-005 as primary and marks EMP-001/EMP-003 as excluded_due_to_overlap; pass only EMP-005 to statistics engine.",
+    "evidence_expectation": {
+      "min_extracted": 1,
+      "expected_retained": ["EMP-005"],
+      "expected_excluded": ["EMP-001", "EMP-003"]
+    },
+    "statistical_expectation": {
+      "should_run_statistics": true,
+      "expected_input_count": 1
+    },
+    "difficulty": "moderate",
+    "failure_mode": "double_counting_or_overlap_leak"
+  },
+  {
+    "case_id": "case_E1",
+    "category": "E_secondary_evidence",
+    "question": "What do meta-analyses and systematic reviews report regarding empagliflozin safety?",
+    "expected_behavior": "Retrieve secondary/review publications (EMP-002/EMP-004); preserve study_type provenance (meta-analysis/review); lineage selection must not misclassify review articles as independent primary RCTs.",
+    "evidence_expectation": {
+      "min_extracted": 1,
+      "target_study_ids": ["EMP-002", "EMP-004"]
+    },
+    "statistical_expectation": {
+      "should_run_statistics": false,
+      "expected_status": "skipped_or_completed"
+    },
+    "difficulty": "moderate",
+    "failure_mode": "primary_secondary_misclassification"
+  },
+  {
+    "case_id": "case_F1",
+    "category": "F_wrong_metric_non_2x2",
+    "question": "What is the hazard ratio for 3-point MACE with empagliflozin vs placebo?",
+    "expected_behavior": "Retrieve Hazard Ratio evidence; classify metric as hazard_ratio; validator prevents misreading HR as Risk Ratio or event count; 2x2 2x2 statistics skipped or restricted.",
+    "evidence_expectation": {
+      "expected_metric_type": "hazard_ratio"
+    },
+    "statistical_expectation": {
+      "should_run_statistics": false
+    },
+    "difficulty": "moderate",
+    "failure_mode": "metric_misinterpretation"
+  },
+  {
+    "case_id": "case_F2",
+    "category": "F_wrong_metric_non_2x2",
+    "question": "What is the incidence rate per 100 patient-years of urinary tract infections for empagliflozin vs placebo?",
+    "expected_behavior": "Extract incidence rate metric (e.g. 9.27 vs 9.70 per 100 pt-yrs); validator ensures rate numbers are not misparsed as integer event counts.",
+    "evidence_expectation": {
+      "expected_outcome": "urinary tract infection"
+    },
+    "statistical_expectation": {
+      "should_run_statistics": false
+    },
+    "difficulty": "hard",
+    "failure_mode": "rate_parsed_as_integer_count"
+  },
+  {
+    "case_id": "case_G1",
+    "category": "G_conflict_multi_study",
+    "question": "Is there conflicting evidence regarding genital infection risk across empagliflozin trials?",
+    "expected_behavior": "Evaluate multi-study evidence; corpus shows consistent increased risk across all EMP publications; record no_conflict_case_available_in_current_corpus without fabricating clinical conflict.",
+    "evidence_expectation": {
+      "target_study_id": "EMP-005"
+    },
+    "statistical_expectation": {
+      "should_run_statistics": true
+    },
+    "difficulty": "moderate",
+    "failure_mode": "no_conflict_case_available_in_current_corpus"
+  },
+  {
+    "case_id": "case_H1",
+    "category": "H_grounding_hallucination",
+    "question": "Does empagliflozin increase the risk of genital infection compared with placebo?",
+    "expected_behavior": "Audit final report and pipeline result to verify 100% grounding: every numerical claim matches validated evidence (301/4687 vs 42/2333) and deterministic statistics (RR=3.5673, OR=3.7435).",
+    "evidence_expectation": {
+      "expected_treatment_events": 301,
+      "expected_control_events": 42
+    },
+    "statistical_expectation": {
+      "should_run_statistics": true,
+      "expected_rr": 3.5673
+    },
+    "difficulty": "standard",
+    "failure_mode": "hallucination_or_unsupported_claim"
+  }
+]
